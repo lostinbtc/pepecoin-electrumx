@@ -235,8 +235,8 @@ function getMostPop(array $connections, bool $sessionsB = true){
     
     // Select most popular client
     arsort($clientCountAr);
-    $result['mpCli'] = key($clientCountAr);
-    $result['mpCliC'] = reset($clientCountAr);
+    $result['mpCli'] = key($clientCountAr) ?? '-';
+    $result['mpCliC'] = reset($clientCountAr) ?: 0;
     
     if(($sessionsB AND CONFIG::SESSIONS_GEO) or (!$sessionsB AND CONFIG::PEERS_GEO)){
         // Select most popular clountry
@@ -257,7 +257,7 @@ function getMostPop(array $connections, bool $sessionsB = true){
 
 function getSessionsData(bool $geo = CONFIG::SESSIONS_GEO) {
 	global $exd;
-  $sessionsData = [];
+  $sessionsData = ['sessions' => []];
   $sessionsRPC = $exd->send('sessions');
   
   if($geo){
@@ -281,7 +281,7 @@ function getSessionsData(bool $geo = CONFIG::SESSIONS_GEO) {
 
 function getPeersData(bool $geo = CONFIG::PEERS_GEO) {
   global $exd;
-  $peersData = [];
+  $peersData = ['peers' => []];
   $peersRPC = $exd->send('peers');
   
   if($geo){

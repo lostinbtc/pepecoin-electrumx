@@ -22,7 +22,8 @@ function createSessionsContent(){
   $content['details'] = getMostPop($sessionsData['sessions']);
   $content['sessions'] = $sessionsData['sessions'];
   $content['sessionsc'] = count($sessionsData['sessions']);
-	$content['details']['sslp'] = round($content['details']['sslc']/$content['sessionsc'],2)*100;
+	$content['details']['sslp'] = $content['sessionsc'] > 0
+        ? round($content['details']['sslc']/$content['sessionsc'],2)*100 : 0;
 	$content['totaltraffic'] = $sessionsData['totaltraffic'];
 	$content['totaltrafficin'] = $sessionsData['totaltrafficin'];
 	$content['totaltrafficout'] = $sessionsData['totaltrafficout'];
@@ -44,9 +45,12 @@ function createPeersContent(){
     $content['details'] = getMostPop($peersData['peers'], false);
     $content['peers'] = $peersData['peers'];
     $content['peersc'] = count($peersData['peers']);
-    $content['details']['sslp'] = round($content['details']['sslc']/$content['peersc'],2)*100;
-    $content['details']['tcpp'] = round($content['details']['tcpc']/$content['peersc'],2)*100;
-    $content['details']['torp'] = round($content['details']['torc']/$content['peersc'],2)*100;
+    $content['details']['sslp'] = $content['peersc'] > 0
+        ? round($content['details']['sslc']/$content['peersc'],2)*100 : 0;
+    $content['details']['tcpp'] = $content['peersc'] > 0
+        ? round($content['details']['tcpc']/$content['peersc'],2)*100 : 0;
+    $content['details']['torp'] = $content['peersc'] > 0
+        ? round($content['details']['torc']/$content['peersc'],2)*100 : 0;
     $content['geo'] = Config::PEERS_GEO;
     if(isset($peersData['api'])) $content['api'] = $peersData['api'];
 

@@ -50,7 +50,6 @@ if(isset($_SESSION['login']) AND $_SESSION['login'] === TRUE){
 		$_SESSION["csfrToken"] = hash('sha256', random_bytes(20));
 // Login		
 }elseif(!isset($_SESSION['login']) AND isset($_POST['password']) AND $_POST['password'] === Config::PASSWORD){
-	ini_set('session.cookie_httponly', '1');
 	$passHashed = hash('sha256', Config::PASSWORD);
 		$_SESSION['login'] = TRUE;
 		$_SESSION["csfrToken"] = hash('sha256', random_bytes(20));
