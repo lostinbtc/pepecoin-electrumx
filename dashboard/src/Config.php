@@ -4,6 +4,11 @@ namespace App;
 // Operator-owned runtime secret; never bake a live password into an image.
 $passwordFile = getenv('DASHBOARD_PASSWORD_FILE') ?: '/run/secrets/dashboard_password';
 $password = is_readable($passwordFile) ? rtrim(file_get_contents($passwordFile), "\r\n") : '';
+if (strlen($password) < 20) {
+    http_response_code(503);
+    header('Content-Type: text/plain; charset=utf-8');
+    exit("Dashboard unavailable: configure a strong runtime password file.\n");
+}
 define('EXD_PASSWORD', $password);
 define('EXD_RPC_HOST', getenv('DASHBOARD_RPC_HOST') ?: 'electrumx');
 define('EXD_RPC_PORT', (int) (getenv('DASHBOARD_RPC_PORT') ?: '8000'));

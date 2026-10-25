@@ -5,11 +5,14 @@ namespace App;
 // Error reporting
 error_reporting(E_ALL); 
 ini_set('ignore_repeated_errors', TRUE); 
-ini_set('display_startup_errors',TRUE); 
-ini_set('display_errors', TRUE);
+ini_set('display_startup_errors', FALSE);
+ini_set('display_errors', FALSE);
+ini_set('log_errors', TRUE);
 
 // Security
 ini_set('session.cookie_httponly', '1');
+ini_set('session.use_strict_mode', '1');
+ini_set('session.cookie_samesite', 'Strict');
 header('Referrer-Policy: same-origin');
 header('X-XSS-Protection: 1; mode=block');
 header('X-Content-Type-Options: nosniff');
@@ -45,9 +48,6 @@ if(isset($_SESSION['login']) AND $_SESSION['login'] === TRUE){
 }elseif(isset($_COOKIE["Login"]) AND $_COOKIE["Login"] === $passToken){
 		$_SESSION['login'] = TRUE;
 		$_SESSION["csfrToken"] = hash('sha256', random_bytes(20));
-// Password disabled
-}elseif(Config::PASSWORD === "") {
-	// Nothing needs to be done
 // Login		
 }elseif(!isset($_SESSION['login']) AND isset($_POST['password']) AND $_POST['password'] === Config::PASSWORD){
 	ini_set('session.cookie_httponly', '1');
