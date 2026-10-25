@@ -48,6 +48,29 @@ operator-owned certificate mounts) and sets `no-new-privileges`; these are defen
 in depth, not a substitute for upstream fixes. Keep tracking Debian advisories and
 rebuilding/retesting when fixes become available. No global ignore list was added.
 
+### Component-level context for the published daemon candidate
+
+Read-only inspection of registry digest
+`sha256:1449b990ad0d37afb79e8a72be0781427235f67de7acc773a50adba38b51089d`
+found the following. This records evidence without suppressing scanner results:
+
+| Advisory/component | Observed context |
+| --- | --- |
+| [CVE-2026-16742](https://security-tracker.debian.org/tracker/CVE-2026-16742), systemd-homed | Debian describes a local privilege issue in homed-managed accounts. The homed executable was absent from its standard paths; the image contains a systemd-family library package, not a running homed service. |
+| [CVE-2026-9538](https://security-tracker.debian.org/tracker/CVE-2026-9538), Perl Archive::Tar | Debian describes tar-entry memory exhaustion in that module. Loading the module failed, and no `Tar.pm` was present in the standard installed Perl module directories checked. |
+| [CVE-2025-69720](https://security-tracker.debian.org/tracker/CVE-2025-69720), infocmp | The affected command-line tool is present. ElectrumX is not an interactive terminal application; this observation does not establish every possible attack path. |
+| [CVE-2026-54369](https://security-tracker.debian.org/tracker/CVE-2026-54369), libacl | The package is present. libacl was not observed in the running daemon's mapped libraries during indexing; that snapshot is not a complete reachability audit. |
+| util-linux mount/nsenter advisories | Tools are present. The test matched the supplied Compose restrictions: `CapEff=0x2` (only `DAC_OVERRIDE`) and `NoNewPrivs=1`, with no `SYS_ADMIN`. Changing deployment privileges changes this assessment. |
+
+The util-linux entries concern privileged mount or namespace workflows:
+[CVE-2026-76642](https://security-tracker.debian.org/tracker/CVE-2026-76642),
+[CVE-2026-78408](https://security-tracker.debian.org/tracker/CVE-2026-78408),
+[CVE-2026-78409](https://security-tracker.debian.org/tracker/CVE-2026-78409), and
+[CVE-2026-78410](https://security-tracker.debian.org/tracker/CVE-2026-78410).
+Debian's notes classify several as minor issues without a current stable-security
+update; that differs from the scanner's severity labels. Neither label alone proves
+network exploitability. No production host or service was changed by this review.
+
 ## Dashboard publication hold
 
 The dashboard **does not pass the candidate gate and is not published** by the
