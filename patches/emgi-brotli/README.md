@@ -48,9 +48,7 @@ affected Brotli package, so it is an emergency recovery option, not the final fi
 
 ## Limits
 
-This addresses the reported Brotli package, not every vulnerability in the old
-image. It does not upgrade the old PHP runtime, change authentication, or establish
-whether the Brotli decoder was reachable by an attacker. Scan the complete image
-for additional findings. Only Linux/amd64 is initially tested here; other platforms
-in the original multi-platform index require independent builds and verification.
-The community member's Discord bot has not been provided for end-to-end testing.
+This patch updates Brotli in the exact pinned emgi image while preserving its
+application code and deployment configuration. It was verified on Linux/amd64;
+other architectures require testing. Whether the affected decoder was reachable
+in your deployment remains unconfirmed.
