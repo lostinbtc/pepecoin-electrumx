@@ -39,7 +39,7 @@ print('Entrypoint, command, environment, workdir, user, declared ports and volum
 created = []
 try:
     for image in [BASE, args.image]:
-        name = 'pep-emgi-compare-' + uuid.uuid4().hex[:12]
+        name = 'pep-legacy-compare-' + uuid.uuid4().hex[:12]
         docker('create', '--name', name, '--network', 'none', '--entrypoint', '/bin/false', image)
         created.append(name)
     for path in ['/entrypoint.sh', '/data/dashboard', '/usr/local/lib/python3.13/site-packages/electrumx']:

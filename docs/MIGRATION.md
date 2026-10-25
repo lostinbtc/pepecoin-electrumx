@@ -1,4 +1,4 @@
-# Migrating from the combined emgi image
+# Migrating from the legacy combined image
 
 Do not replace the image name blindly. The old image starts Apache and ElectrumX
 in one container; this project uses two services, with the dashboard optional.

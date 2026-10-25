@@ -79,7 +79,9 @@ try:
         status, headers, body = fetch(opener, base, data=urllib.parse.urlencode({'password': password}).encode())
         assert status == 200 and 'Block Height' in body and re.search(r'>\s*synced\s*<', body)
         assert 'Server offline or incorrect RPC data' not in body
-        for path in ['', '?p=sessions', '?p=peers']:
+        assert 'https://github.com/lostinbtc/pepecoin-electrumx' in body
+        assert 'Dashboard by Mr Bachelor' not in body
+        for path in ['', '?p=sessions', '?p=peers', '?p=about']:
             code, _, page = fetch(opener, base + path)
             assert code == 200, (path, code)
             assert 'Server offline or incorrect RPC data' not in page
