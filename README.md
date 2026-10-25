@@ -29,6 +29,10 @@ A versioned daemon candidate pipeline is provided; see
 stable-release certification. The optional dashboard is not published while its
 remaining Critical package findings are under review.
 
+The first [published daemon candidate, v1.18.0-pep.1-rc.1](docs/releases/v1.18.0-pep.1-rc.1.md),
+is available anonymously from GHCR. Read its exact digest, verification status,
+and limitations before opting in; a candidate is not a stable-release endorsement.
+
 The Electrum daemon and dashboard are separate services. The dashboard is disabled
 unless the `dashboard` Compose profile is selected. Only Electrum ports 50001,
 50002, and 50004 are public. Administrative RPC 8000 is internal to Docker.

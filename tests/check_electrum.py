@@ -50,9 +50,12 @@ def main():
     container_created = volume_created = False
     started = time.time()
     tests = Path(__file__).resolve().parent
-    image_id = docker('image', 'inspect', '--format', '{{.Id}}', args.image)
+    image_info = json.loads(docker('image', 'inspect', args.image))[0]
+    image_id = image_info['Id']
     info = {'image_id': image_id, 'full_chain': args.full_chain, 'container': prefix,
-            'volume': volume, 'ports': ports, 'fresh_database': True, 'passed': False}
+            'volume': volume, 'ports': ports, 'fresh_database': True, 'passed': False,
+            'registry_digests': image_info.get('RepoDigests', []),
+            'source_revision': (image_info['Config'].get('Labels') or {}).get('org.opencontainers.image.revision')}
 
     def save(name, data):
         temp = root / (name + '.tmp')
@@ -194,6 +197,9 @@ def main():
         # Never include configuration or credential-bearing URLs in reports.
         save('status', {'phase':'stopped' if isinstance(exc, InterruptedError) else 'failed',
                         'error_type':type(exc).__name__})
+        if isinstance(exc, InterruptedError):
+            print('Operator requested stop; flushing and cleaning up the test service.', flush=True)
+            raise SystemExit(130)
         raise
     finally:
         if container_created:
