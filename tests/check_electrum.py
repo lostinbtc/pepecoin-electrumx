@@ -1,7 +1,7 @@
 """Linux Docker integration test: fresh DB, genesis or real chain, verified TLS/WSS.
 
 Full-chain mode requires CHAIN_TEST_DAEMON_URL pointing to an operator-provided
-read-only RPC bridge on loopback. It never uses an existing ElectrumX database.
+read-only RPC bridge on loopback. It only creates or resumes its own test database.
 All listening ports are loopback-only; peer discovery/announcement is disabled.
 """
 import argparse
@@ -21,6 +21,24 @@ import uuid
 
 from protocol_probe import rpc
 
+class TestStopped(BaseException):
+    """Keep operator cancellation out of connection-retry exception handlers."""
+
+def validate_resume(previous, status, image_id, volume_info, attached_containers):
+    """Refuse any active, unrelated, or differently built database before opening it."""
+    def require(condition, message):
+        if not condition:
+            raise ValueError(message)
+    require(status['phase'] in ('stopped', 'failed'), 'Previous test must be stopped')
+    require(previous['full_chain'] and previous['image_id'] == image_id, 'Resume requires the exact same image')
+    require(previous.get('fresh_database') or previous.get('fresh_origin_verified'), 'No verified fresh test origin')
+    volume = previous['volume']
+    owner = previous.get('volume_label_owner', previous['container'])
+    require(re.fullmatch(r'pep-index-test-[0-9a-f]{10}', owner) and volume == owner + '-data', 'Not a harness test volume')
+    require((volume_info.get('Labels') or {}).get('io.pepecoin.test') == owner, 'Volume ownership label mismatch')
+    require(not attached_containers, 'A container still owns this database')
+    return volume, owner
+
 def docker(*args, timeout=60):
     return subprocess.check_output(['docker', *args], text=True, stderr=subprocess.STDOUT, timeout=timeout).strip()
 
@@ -37,6 +55,8 @@ def main():
     parser.add_argument('--timeout-hours', type=float, default=24)
     parser.add_argument('--progress-seconds', type=int, default=120)
     parser.add_argument('--keep-database', action='store_true')
+    parser.add_argument('--resume-run', type=Path,
+                        help='Resume a stopped full-chain test created by this harness; never a production volume')
     args = parser.parse_args()
     os.umask(0o077)
     root = args.output.resolve()
@@ -56,6 +76,20 @@ def main():
             'volume': volume, 'ports': ports, 'fresh_database': True, 'passed': False,
             'registry_digests': image_info.get('RepoDigests', []),
             'source_revision': (image_info['Config'].get('Labels') or {}).get('org.opencontainers.image.revision')}
+    if args.resume_run:
+        assert args.full_chain, 'Resume is only supported for full-chain tests'
+        previous_root = args.resume_run.resolve()
+        previous = json.loads((previous_root/'run.json').read_text())
+        previous_status = json.loads((previous_root/'status.json').read_text())
+        volume = previous['volume']
+        existing = json.loads(docker('volume', 'inspect', volume))[0]
+        attached = docker('ps', '-aq', '--filter', 'volume=' + volume)
+        volume, owner = validate_resume(previous, previous_status, image_id, existing, attached)
+        prior_log = previous_root/'electrumx.log'
+        info.update(volume=volume, volume_label_owner=owner, fresh_database=False,
+                    fresh_origin_verified=True, resumed_from=str(previous_root),
+                    prior_run_error_markers=prior_log.read_text().count('ERROR:') if prior_log.exists() else None,
+                    original_core_height=previous.get('original_core_height', previous['initial_core_height']))
 
     def save(name, data):
         temp = root / (name + '.tmp')
@@ -63,7 +97,7 @@ def main():
         temp.replace(root / (name + '.json'))
 
     def stop(signum, frame):
-        raise InterruptedError('Test stopped by operator')
+        raise TestStopped('Test stopped by operator')
 
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
@@ -105,7 +139,8 @@ def main():
             '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
             '-keyout', str(root/'certs/key.pem'), '-out', str(root/'certs/cert.pem')],
             check=True, capture_output=True)
-        docker('volume', 'create', '--label', label, volume)
+        if not args.resume_run:
+            docker('volume', 'create', '--label', label, volume)
         volume_created = True
         env = {
             'DB_DIRECTORY': '/data/db', 'COIN': 'Pepecoin',
@@ -195,9 +230,9 @@ def main():
         print(json.dumps(info), flush=True)
     except BaseException as exc:
         # Never include configuration or credential-bearing URLs in reports.
-        save('status', {'phase':'stopped' if isinstance(exc, InterruptedError) else 'failed',
+        save('status', {'phase':'stopped' if isinstance(exc, TestStopped) else 'failed',
                         'error_type':type(exc).__name__})
-        if isinstance(exc, InterruptedError):
+        if isinstance(exc, TestStopped):
             print('Operator requested stop; flushing and cleaning up the test service.', flush=True)
             raise SystemExit(130)
         raise

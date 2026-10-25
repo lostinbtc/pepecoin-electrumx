@@ -137,3 +137,20 @@ container/volume afterward. Reports and logs remain in the output directory.
 `--keep-database` retains the explicitly named test volume for investigation.
 SIGINT/SIGTERM initiates clean shutdown. It never selects a production database.
 This harness uses Linux host networking and requires privileged Docker access.
+
+To resume an interrupted full-chain test that used `--keep-database`, keep its
+original reports and provide a **new** output directory:
+
+```sh
+python3 tests/check_electrum.py --image YOUR_SAME_REVIEWED_IMAGE \
+  --full-chain --keep-database --progress-seconds 120 \
+  --resume-run /path/to/previous/full-chain-test-directory \
+  --output /path/to/new/resumed-test-directory
+```
+
+Resume requires the exact original image ID, a stopped/failed run, verified fresh
+test origin, the harness's volume name/ownership label, and no attached container.
+It does not accept arbitrary existing databases. Both runs' evidence must be kept:
+resuming does not erase earlier errors or turn a partial index into a completed
+full-chain test. These checks are operator safeguards, not a security boundary
+against someone who can alter Docker resources or test metadata.
