@@ -1,0 +1,142 @@
+name: Build and verify container candidate
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*-rc.*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install checksum-verified scanners
+        run: python3 scripts/install_release_tools.py --directory "$RUNNER_TEMP/release-tools"
+      - name: Scan Git history for secrets
+        run: |
+          mkdir -p reports
+          "$RUNNER_TEMP/release-tools/gitleaks" git --redact --report-path reports/gitleaks.json .
+      - name: Validate workflow
+        run: '"$RUNNER_TEMP/release-tools/actionlint" -color'
+      - name: Build source-linked runtime images
+        env:
+          SOURCE_URL: https://github.com/${{ github.repository }}
+          SOURCE_REVISION: ${{ github.sha }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: |
+          docker build --pull --no-cache \
+            --label "org.opencontainers.image.source=$SOURCE_URL" \
+            --label "org.opencontainers.image.revision=$SOURCE_REVISION" \
+            --label "org.opencontainers.image.version=$RELEASE_REF" \
+            --label 'org.opencontainers.image.licenses=MIT' \
+            -t pepecoin-electrumx-candidate:daemon electrumx
+          docker build --pull --no-cache -t pepecoin-electrumx-candidate:dashboard dashboard
+      - name: Unit tests in disposable test-only environment
+        run: |
+          docker run --rm --entrypoint sh \
+            -v "$PWD/electrumx/tests:/opt/electrumx/tests:ro" \
+            -v "$PWD/tests:/release-tests:ro" \
+            -v "$PWD/scripts:/scripts:ro" -w /opt/electrumx \
+            pepecoin-electrumx-candidate:daemon -c '
+              set -eu
+              apt-get update
+              apt-get install -y --no-install-recommends build-essential
+              python -m ensurepip --upgrade
+              python -m pip install --no-cache-dir pytest pytest-asyncio blake256 groestlcoin-hash pycryptodomex
+              python -m pytest -q -p no:cacheprovider tests /release-tests'
+      - name: Real-genesis protocol and restart test
+        run: |
+          python3 tests/check_electrum.py --image pepecoin-electrumx-candidate:daemon \
+            --output "$RUNNER_TEMP/electrum-genesis"
+          cp "$RUNNER_TEMP/electrum-genesis/result.json" reports/genesis-result.json
+      - name: Dashboard authentication and empty-state test
+        run: |
+          python3 tests/check_dashboard.py --dashboard-image pepecoin-electrumx-candidate:dashboard \
+            --python-image pepecoin-electrumx-candidate:daemon
+      - name: Scan images and enforce daemon candidate gate
+        run: |
+          SCANNER="$RUNNER_TEMP/release-tools/trivy"
+          "$SCANNER" image --timeout 15m --scanners vuln,secret --format json \
+            --output "$RUNNER_TEMP/daemon-raw-scan.json" pepecoin-electrumx-candidate:daemon
+          "$SCANNER" image --timeout 15m --scanners vuln,secret --format json \
+            --output "$RUNNER_TEMP/dashboard-raw-scan.json" pepecoin-electrumx-candidate:dashboard
+          python3 scripts/check_image_scan.py "$RUNNER_TEMP/dashboard-raw-scan.json" \
+            --output reports/dashboard-scan-summary.json --report-only
+          python3 scripts/check_image_scan.py "$RUNNER_TEMP/daemon-raw-scan.json" \
+            --output reports/daemon-scan-summary.json
+          "$SCANNER" image --format cyclonedx --output reports/daemon-sbom.cdx.json \
+            pepecoin-electrumx-candidate:daemon
+      - name: Save the exact tested daemon image
+        run: docker save pepecoin-electrumx-candidate:daemon | gzip > "$RUNNER_TEMP/daemon-image.tar.gz"
+      - name: Upload tested image for publishing job
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tested-daemon-image
+          path: ${{ runner.temp }}/daemon-image.tar.gz
+          retention-days: 7
+          compression-level: 0
+      - name: Upload sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verification-reports
+          path: reports/
+          retention-days: 30
+
+  publish-candidate:
+    needs: verify
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-rc.')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: tested-daemon-image
+          path: ${{ runner.temp }}
+      - name: Validate candidate tag
+        env:
+          RELEASE_REF: ${{ github.ref_name }}
+        run: '[[ "$RELEASE_REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-pep\.[0-9]+-rc\.[0-9]+$ ]]'
+      - name: Load tested image and publish candidate
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          REGISTRY_USER: ${{ github.actor }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/${REPOSITORY,,}:$RELEASE_REF"
+          gzip -dc "$RUNNER_TEMP/daemon-image.tar.gz" | docker load
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          docker tag pepecoin-electrumx-candidate:daemon "$IMAGE"
+          docker push "$IMAGE"
+          docker image inspect "$IMAGE" --format '{{range .RepoDigests}}{{println .}}{{end}}' > image-digest.txt
+          {
+            echo '### Release candidate — not a stable release'
+            echo 'Exact CI-tested daemon image; Linux/amd64 only.'
+            echo 'Full-chain indexing must be verified separately on this registry digest.'
+            echo 'Third-party bot compatibility is not verified; dashboard is not published.'
+            cat image-digest.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+          docker logout ghcr.io
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: published-image-digest
+          path: image-digest.txt
+          retention-days: 90

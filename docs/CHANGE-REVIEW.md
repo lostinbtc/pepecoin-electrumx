@@ -5,6 +5,16 @@ history guard, security packages, dashboard access hardening, and test fixes.
 The root import is a historical baseline, not a recommended deployable release.
 Use current reviewed `main` for the complete stack.
 
+## Standalone runtime packaging and dependency review
+
+Commit: [c9b8187](https://github.com/lostinbtc/pepecoin-electrumx/commit/c9b8187)
+
+Moves daemon compilation into a separate build stage, constrains its Python runtime
+dependencies, pins base-image digests, and removes unused installer/build tooling.
+The optional dashboard refreshes Debian packages and removes development headers.
+This does not change Electrum protocol code or database format. Full scan findings
+and publication limits are disclosed in [release security](RELEASE-SECURITY.md).
+
 ## Our split dashboard: PHP and Brotli package patch
 
 Commit: [6d569b5](https://github.com/lostinbtc/pepecoin-electrumx/commit/6d569b56d6c839839391d09624214df4465355bf)
@@ -26,7 +36,7 @@ browser error details, and protects source-directory access. This is independent
 of the package update. Keep the dashboard private; this is not a complete security
 audit or permission to expose the legacy administrative application publicly.
 
-## Original emgi image: Brotli-only compatibility patch
+## Original combined image: Brotli-only compatibility patch
 
 Commit: [73f4421](https://github.com/lostinbtc/pepecoin-electrumx/commit/73f442150d8cc50aa5791aeff51798c5a4fbf62b)
 

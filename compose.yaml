@@ -1,8 +1,16 @@
 services:
   electrumx:
+    image: ${ELECTRUM_IMAGE:-pepecoin-electrumx:local}
     build: ./electrumx
     restart: unless-stopped
     stop_grace_period: 5m
+    cap_drop: [ALL]
+    # Read operator-owned, restrictive certificate files through read-only mounts.
+    cap_add: [DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
     environment:
       HOME: /data
       ALLOW_ROOT: "1"
@@ -30,6 +38,7 @@ services:
   dashboard:
     profiles: [dashboard]
     build: ./dashboard
+    image: ${DASHBOARD_IMAGE:-pepecoin-electrumx-dashboard:local}
     restart: unless-stopped
     depends_on: [electrumx]
     environment:

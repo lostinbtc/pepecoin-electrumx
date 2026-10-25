@@ -17,10 +17,16 @@ faucet, donation service, Discord credentials, live databases, or production con
 ## Status and scope
 
 This is a maintained reconstruction, not an official Pepecoin Core release and not
-a drop-in replacement for the combined `emgi2/pepecoin-electrum` container. Read
+a drop-in replacement for the legacy combined Apache/ElectrumX container. Read
 [provenance](docs/PROVENANCE.md) and [migration](docs/MIGRATION.md) before switching.
 No registry images or pullable release digests have been published by this project.
 Use the latest reviewed commit, not the historical baseline import commit.
+
+A versioned daemon candidate pipeline is provided; see
+[container releases and upgrades](docs/CONTAINER-RELEASES.md) and the
+[current security review](docs/RELEASE-SECURITY.md). Candidate status is not a
+stable-release certification. The optional dashboard is not published while its
+remaining Critical package findings are under review.
 
 The Electrum daemon and dashboard are separate services. The dashboard is disabled
 unless the `dashboard` Compose profile is selected. Only Electrum ports 50001,
@@ -77,13 +83,13 @@ configuration before upgrades. Never run `docker compose down -v` on a live inde
 ## Change review
 
 The baseline import, deployed history-compaction safeguards, PHP/Brotli updates,
-dashboard authentication hardening, and optional emgi-compatible patch are kept in
+dashboard authentication hardening, and optional legacy-image compatibility patch are kept in
 separate commits. Review the relevant commit instead of merging unrelated changes.
 See [separate security diffs](docs/CHANGE-REVIEW.md) and
 [verification results and reproducible checks](docs/VERIFICATION.md).
 
 If you only need the reported Brotli fix while retaining the original combined
-container, use [the standalone emgi patch](patches/emgi-brotli/README.md), not this
+container, use [the standalone compatibility patch](patches/emgi-brotli/README.md), not this
 repository's root Compose deployment.
 
 ## Licenses
