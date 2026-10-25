@@ -99,6 +99,17 @@ database, never run `docker compose down -v` on a live index, and never assume a
 database modified by a newer release can be opened safely by an older one. For
 rollback, use the prior image and the untouched matching backup.
 
+### Long-running history maintenance
+
+The legacy history format uses a 16-bit flush identifier. The included guard checks
+it **at startup**, with a default `HISTORY_COMPACTION_THRESHOLD=50000`; it is not a
+continuous maintenance scheduler. Watch `db_flush_count` in `electrumx_rpc getinfo`
+and arrange a clean restart when it reaches your configured threshold, before the
+65,536 boundary. Startup then performs any required offline compaction and verifies
+its result before serving. Allow for that maintenance downtime. Do not run the
+offline guard or compactor against a database already open by the running daemon,
+and do not rely on an overflow-triggered crash/restart as the maintenance plan.
+
 ## Repeat the local tests
 
 Build the images following the README. The production image deliberately lacks
