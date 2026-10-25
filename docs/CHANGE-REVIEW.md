@@ -15,6 +15,11 @@ The optional dashboard refreshes Debian packages and removes development headers
 This does not change Electrum protocol code or database format. Full scan findings
 and publication limits are disclosed in [release security](RELEASE-SECURITY.md).
 
+The release/test pipeline is separate in [bb6a0d2](https://github.com/lostinbtc/pepecoin-electrumx/commit/bb6a0d2).
+Dashboard branding and neutral legacy test naming are separate in
+[ad7cd31](https://github.com/lostinbtc/pepecoin-electrumx/commit/ad7cd31).
+The previously shared compatibility-patch README and URL are retained unchanged.
+
 ## Our split dashboard: PHP and Brotli package patch
 
 Commit: [6d569b5](https://github.com/lostinbtc/pepecoin-electrumx/commit/6d569b56d6c839839391d09624214df4465355bf)

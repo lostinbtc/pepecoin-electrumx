@@ -19,8 +19,9 @@ faucet, donation service, Discord credentials, live databases, or production con
 This is a maintained reconstruction, not an official Pepecoin Core release and not
 a drop-in replacement for the legacy combined Apache/ElectrumX container. Read
 [provenance](docs/PROVENANCE.md) and [migration](docs/MIGRATION.md) before switching.
-No registry images or pullable release digests have been published by this project.
-Use the latest reviewed commit, not the historical baseline import commit.
+Registry publishing is gated and initially release-candidate only; no stable image
+has been certified. Use a reviewed source commit or actual published candidate
+digest, not the historical baseline import commit or an example placeholder.
 
 A versioned daemon candidate pipeline is provided; see
 [container releases and upgrades](docs/CONTAINER-RELEASES.md) and the

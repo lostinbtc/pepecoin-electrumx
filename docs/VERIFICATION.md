@@ -66,7 +66,8 @@ a real deployment password. These checks need Docker access, which is privileged
 - The third-party Discord bot source/configuration was not supplied. Its actual
   monitoring and control workflows still require validation.
 - Other CPU architectures and every dependency's vulnerability status are not
-  certified. No prebuilt registry image, immutable registry digest, or signed release
-  has been published by this repository yet.
+  certified. These initial checks did not publish a registry image or signed
+  release. See [container releases](CONTAINER-RELEASES.md) for the candidate pipeline
+  and [release security](RELEASE-SECURITY.md) for the subsequent package scans.
 - PHP dashboard defaults intentionally differ from the old combined image. Use the
   standalone compatibility patch if retaining those interfaces is your immediate requirement.
