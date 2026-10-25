@@ -3,8 +3,11 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 import socket
 import ssl
+import subprocess
+from urllib.parse import urlsplit
 
 GENESIS = '37981c0c48b8d48965376c8a42ece9a0838daadb93ff975cb091f57f8c2a5faa'
 
@@ -27,6 +30,14 @@ async def probe(args):
     from websockets.asyncio.client import connect
     context = ssl.create_default_context(cafile='/certs/cert.pem')
     reports = []
+    admin_ports = [urlsplit(service).port for service in os.environ['SERVICES'].split(',')
+                   if service.startswith('rpc://')]
+    assert len(admin_ports) == 1
+    admin = json.loads(subprocess.check_output(
+        ['electrumx_rpc', '-p', str(admin_ports[0]), 'getinfo'], text=True, timeout=45))
+    assert admin['coin'] == 'Pepecoin' and admin['db height'] >= args.height
+    assert all(key in admin for key in ('daemon height', 'sessions', 'peers', 'uptime'))
+    reports.append({'admin_cli': 'electrumx_rpc getinfo', 'height': admin['db height'], 'passed': True})
     for port, tls in [(args.tcp, None), (args.tls, context)]:
         version = rpc(port, 'server.version', ['release-verification', '1.4'], tls)
         features = rpc(port, 'server.features', context=tls)
