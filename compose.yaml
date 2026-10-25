@@ -1,0 +1,51 @@
+services:
+  electrumx:
+    build: ./electrumx
+    restart: unless-stopped
+    stop_grace_period: 5m
+    environment:
+      HOME: /data
+      ALLOW_ROOT: "1"
+      DB_DIRECTORY: /data/db
+      COIN: Pepecoin
+      DAEMON_URL: ${DAEMON_URL:?Set DAEMON_URL in .env}
+      EVENT_LOOP_POLICY: uvloop
+      SERVICES: tcp://:50001,ssl://:50002,wss://:50004,rpc://0.0.0.0:8000
+      SSL_CERTFILE: /certs/${ELECTRUM_CERTFILE:-fullchain.pem}
+      SSL_KEYFILE: /certs/${ELECTRUM_KEYFILE:-privkey.pem}
+      REPORT_SERVICES: tcp://${ELECTRUM_PUBLIC_HOST:?Set ELECTRUM_PUBLIC_HOST}:50001,ssl://${ELECTRUM_PUBLIC_HOST}:50002,wss://${ELECTRUM_PUBLIC_HOST}:50004
+      MAX_SESSIONS: ${MAX_SESSIONS:-1000}
+      HISTORY_COMPACTION_THRESHOLD: ${HISTORY_COMPACTION_THRESHOLD:-50000}
+      DONATION_ADDRESS: ${DONATION_ADDRESS:-}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "50001:50001"
+      - "50002:50002"
+      - "50004:50004"
+    volumes:
+      - electrumx_data:/data
+      - ./certs:/certs:ro
+
+  dashboard:
+    profiles: [dashboard]
+    build: ./dashboard
+    restart: unless-stopped
+    depends_on: [electrumx]
+    environment:
+      DASHBOARD_RPC_HOST: electrumx
+      DASHBOARD_RPC_PORT: "8000"
+      DASHBOARD_PASSWORD_FILE: /run/secrets/dashboard_password
+    secrets: [dashboard_password]
+    ports:
+      - "127.0.0.1:${DASHBOARD_PORT:-8002}:80"
+    volumes:
+      - dashboard_data:/var/www/html/data
+
+volumes:
+  electrumx_data:
+  dashboard_data:
+
+secrets:
+  dashboard_password:
+    file: ./secrets/dashboard_password

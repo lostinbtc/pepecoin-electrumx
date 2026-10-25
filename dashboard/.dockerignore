@@ -1,0 +1,15 @@
+*
+!Dockerfile
+!assets/
+!assets/**
+!views/
+!views/**
+!src/
+!src/**
+!index.php
+!login.html
+!.htaccess
+!LICENSE
+!data/
+!data/.htaccess
+!data/hoster.json

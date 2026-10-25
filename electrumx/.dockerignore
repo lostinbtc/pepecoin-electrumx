@@ -1,0 +1,11 @@
+*
+!Dockerfile
+!LICENCE
+!README.md
+!MANIFEST.in
+!pyproject.toml
+!entrypoint.sh
+!src/
+!src/**
+**/__pycache__/
+**/*.pyc

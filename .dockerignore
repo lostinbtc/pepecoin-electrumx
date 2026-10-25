@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+secrets
+certs
+backups
+__pycache__
+**/__pycache__
+*.patch
