@@ -4,6 +4,7 @@
 !README.md
 !MANIFEST.in
 !pyproject.toml
+!requirements-runtime.txt
 !entrypoint.sh
 !src/
 !src/**

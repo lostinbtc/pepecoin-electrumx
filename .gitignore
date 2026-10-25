@@ -17,6 +17,7 @@ __pycache__/
 build/
 dist/
 backups/
+/temp/
 dashboard/data/*
 !dashboard/data/.htaccess
 !dashboard/data/hoster.json

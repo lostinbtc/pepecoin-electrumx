@@ -1,0 +1,15 @@
+# Reviewed runtime dependency set. Update deliberately, scan, and retest the image.
+# The project itself remains installed from this repository's source.
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.5
+aiorpcx==0.25.0
+aiosignal==1.4.0
+attrs==26.1.0
+frozenlist==1.8.0
+idna==3.20
+multidict==7.2.1
+plyvel==1.5.1
+propcache==0.5.4
+uvloop==0.23.0
+websockets==17.3
+yarl==1.25.1
