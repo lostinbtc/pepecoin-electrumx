@@ -75,9 +75,11 @@ def main():
     except Exception:
         traceback.print_exc()
         logging.critical('History compaction terminated abnormally')
+        return 1
     else:
         logging.info('History compaction complete')
+        return 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())
