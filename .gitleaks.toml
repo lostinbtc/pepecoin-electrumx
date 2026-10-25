@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+# Public TokenPay address in the unchanged upstream address-decoding test vector.
+# Match this one line only; do not suppress the file or generic-key rule globally.
+[[allowlists]]
+description = "Upstream public TokenPay address fixture (not an API credential)"
+condition = "AND"
+paths = ['''^electrumx/tests/lib/test_addresses\.py$''']
+regexTarget = "line"
+regexes = ['''^\s*\(coins\.TokenPay, "TDE2X28FGtckatxuP3d8s3V726G4TLNHpT",\s*$''']

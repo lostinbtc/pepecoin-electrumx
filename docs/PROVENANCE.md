@@ -12,6 +12,14 @@
 - Pepecoin Service changes: peer-list maintenance, split deployment, startup/history
   safeguards, security package floors, and sanitized operator configuration.
 
+Fresh unauthenticated GitHub API checks on 2026-10-25 confirmed that MasterKush's
+`PepeEnthusiast/electrumx-pepecoin` and `PepeEnthusiast/electrumx-dashboard-pepecoin`
+repositories are public and report MIT licenses. His `docker-electrumx-pepecoin`
+repository is also public, but the API reports no detected license for that wrapper.
+Public visibility alone is not a license; our packaging is maintained here rather
+than copied from an unlicensed wrapper. The separate Rust project
+`PepeEnthusiast/electrs-mempool-pepecoin` is not the Python server in this repository.
+
 Audited original multi-platform index:
 
 ```text

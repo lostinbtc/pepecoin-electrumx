@@ -1,5 +1,15 @@
 # Pepecoin ElectrumX
 
+```text
+Licence: MIT
+Original Author: Neil Booth
+Current Maintainers: The Electrum developers
+Language: Python (>= 3.10)
+```
+
+The attribution above describes upstream ElectrumX. Pepecoin adaptations and this
+repository's maintenance are documented in [provenance](docs/PROVENANCE.md).
+
 Standalone, source-built Pepecoin ElectrumX 1.18.0 with an optional PHP dashboard.
 This repository starts with fresh history; it contains no Pepecoin Service website,
 faucet, donation service, Discord credentials, live databases, or production configs.
@@ -69,6 +79,12 @@ configuration before upgrades. Never run `docker compose down -v` on a live inde
 The baseline import, deployed history-compaction safeguards, PHP/Brotli updates,
 dashboard authentication hardening, and optional emgi-compatible patch are kept in
 separate commits. Review the relevant commit instead of merging unrelated changes.
+See [separate security diffs](docs/CHANGE-REVIEW.md) and
+[verification results and reproducible checks](docs/VERIFICATION.md).
+
+If you only need the reported Brotli fix while retaining the original combined
+container, use [the standalone emgi patch](patches/emgi-brotli/README.md), not this
+repository's root Compose deployment.
 
 ## Licenses
 
