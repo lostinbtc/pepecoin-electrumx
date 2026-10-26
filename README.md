@@ -59,6 +59,11 @@ See [the dashboard security patch and deployment instructions](docs/DASHBOARD.md
 The [optional dashboard image v1.0.0-rc.1](docs/releases/dashboard-v1.0.0-rc.1.md)
 is available anonymously, with its verified digest and scan results recorded.
 
+The dashboard includes **PHP 8.4.27 and Apache**. Its runtime packages were updated
+and security-scanned on **October 25, 2026**, with zero reported package
+vulnerabilities in the published image at that time. Future security fixes require
+an updated image; this is not an automatic-update guarantee.
+
 Create `secrets/dashboard_password` containing a unique, strong password (at least
 20 characters). Do not commit the file. Restrict the directory to its owner, and
 ensure the mounted file is readable by the container's Apache user. Compose local
