@@ -1,5 +1,7 @@
 *
 !Dockerfile
+!httpd.conf
+!php-security.ini
 !assets/
 !assets/**
 !views/

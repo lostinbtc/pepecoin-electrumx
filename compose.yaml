@@ -40,6 +40,11 @@ services:
     build: ./dashboard
     image: ${DASHBOARD_IMAGE:-pepecoin-electrumx-dashboard:local}
     restart: unless-stopped
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /run/apache2:rw,noexec,nosuid,size=8m
     depends_on: [electrumx]
     environment:
       DASHBOARD_RPC_HOST: electrumx

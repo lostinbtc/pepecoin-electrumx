@@ -1,23 +1,27 @@
-# PHP fixes CVE-2026-109618 and CVE-2026-109619. Overrides must pass the guard.
-ARG PHP_BASE_IMAGE=php:8.2.35-apache-bookworm@sha256:5714c8607608e50d880a5f222fab556edecd4a11b9c50c81fce1c7932c1cf604
-FROM ${PHP_BASE_IMAGE}
+# Optional dashboard only; the ElectrumX daemon image is unchanged.
+FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 
-# Debian backports CVE-2026-111497; the full package revision is authoritative.
+# Use maintained distribution packages, not locally compiled replacement libraries.
+# Minimum revisions retain the reviewed PHP/Brotli/XML/zlib fixes on rebuilds.
 RUN set -eux; \
-    . /etc/os-release; \
-    test "$VERSION_CODENAME" = bookworm; \
-    apt-get update; \
-    apt-get upgrade -y; \
-    apt-get install -y --no-install-recommends libbrotli1; \
-    apt-get purge -y --auto-remove $PHPIZE_DEPS libc6-dev linux-libc-dev; \
-    dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libbrotli1)" ge '1.0.9-2+deb12u1'; \
-    php -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 2 && version_compare(PHP_VERSION, "8.2.35", ">=") ? 0 : 1);'; \
-    rm -rf /var/lib/apt/lists/*
+    apk upgrade --no-cache; \
+    apk add --no-cache 'apache2>=2.4.69-r0' 'php84>=8.4.27-r0' \
+        php84-apache2 php84-session php84-ctype php84-openssl php84-curl \
+        'brotli-libs>=1.2.1-r0' 'libxml2>=2.13.9-r2' 'zlib>=1.3.2-r1'; \
+    addgroup -g 33 dashboard; \
+    adduser -D -H -u 33 -G dashboard dashboard; \
+    mkdir -p /run/apache2 /var/www/html/data; \
+    php84 -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 4 && version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);'
 
 WORKDIR /var/www/html
+COPY httpd.conf /etc/apache2/httpd.conf
+COPY php-security.ini /etc/php84/conf.d/99-dashboard.ini
 COPY assets ./assets
 COPY views ./views
 COPY src ./src
 COPY index.php login.html .htaccess LICENSE ./
 COPY data/.htaccess data/hoster.json ./data/
-RUN chown -R www-data:www-data /var/www/html/data
+RUN chown -R 33:33 /var/www/html/data && httpd -t
+EXPOSE 80
+STOPSIGNAL SIGWINCH
+CMD ["httpd", "-D", "FOREGROUND"]
