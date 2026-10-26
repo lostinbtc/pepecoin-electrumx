@@ -5,6 +5,18 @@ history guard, security packages, dashboard access hardening, and test fixes.
 The root import is a historical baseline, not a recommended deployable release.
 Use current reviewed `main` for the complete stack.
 
+## Optional dashboard: security-patched container runtime
+
+Commit: [d02676e](https://github.com/lostinbtc/pepecoin-electrumx/commit/d02676e5e4f257419247ded31a538306bdd29793)
+
+[Download the exact patch](https://github.com/lostinbtc/pepecoin-electrumx/commit/d02676e5e4f257419247ded31a538306bdd29793.patch)
+
+**Optional:** wallets and direct Electrum RPC clients do not need this component.
+Updates the separate dashboard's package base, preserves UID-33 data and runtime
+secrets, restricts HTTP file access, and verifies populated pages and restart.
+Does not change daemon code or data. See [setup, tests and scope](DASHBOARD.md).
+The workflow/publication changes are separate from this security diff.
+
 ## Standalone runtime packaging and dependency review
 
 Commit: [c9b8187](https://github.com/lostinbtc/pepecoin-electrumx/commit/c9b8187)

@@ -24,6 +24,10 @@ Publishing uses the repository's short-lived `GITHUB_TOKEN` with `packages: writ
 only in the publishing job. It does not require an operator's Core RPC credentials,
 Discord token, SSH key, or database. No `latest` or stable tag is published by this
 workflow. The dashboard is tested/scanned but is **not published** by it.
+The separate `dashboard-candidate.yml` workflow builds, tests, scans and publishes
+only explicit `dashboard-vX.Y.Z-rc.N` tags to the optional dashboard package. It
+does not rebuild or replace the published daemon. See [optional dashboard and
+exact security patch](DASHBOARD.md).
 
 The gate blocks detected secrets, every Critical finding, and High findings with
 an available fix. Unfixed High findings are explicitly disclosed, not hidden with
@@ -83,7 +87,7 @@ all capabilities except `DAC_OVERRIDE`, needed to read restrictive operator-owne
 certificate files through read-only mounts without weakening their host permissions.
 Its database remains writable in the separate `/data` volume.
 Only TCP/TLS/WSS are published; administrative RPC remains internal. Keep the
-dashboard private and source-built until it has a separately reviewed release.
+dashboard private; it has a separately reviewed optional image and release path.
 
 ## Future upgrades and rollback
 

@@ -18,16 +18,24 @@ therefore independent builds are not promised to be bit-for-bit identical.
 Release images need their own recorded registry digest and verification evidence.
 Build-only artifacts and test certificates are excluded from image contexts.
 
-The optional dashboard refreshes Debian packages and removes its unused extension
-compiler/development headers. Its existing PHP/Brotli guards remain in place.
-There are no application-code or database-format changes in these packaging edits.
+The optional dashboard now uses pinned Alpine 3.24.3 with maintained Apache 2.4.69
+and PHP 8.4.27 packages, Brotli 1.2.1, libxml2 2.13.9-r2 and zlib 1.3.2-r1 minimums.
+SQLite is not installed. UID/GID 33 and the data/password/RPC interface are retained.
+There are no Electrum application-code or database-format changes. Review the
+[exact optional dashboard patch](https://github.com/lostinbtc/pepecoin-electrumx/commit/d02676e5e4f257419247ded31a538306bdd29793.patch)
+and [maintenance requirements](DASHBOARD.md).
 
 ## Local results
 
 | Runtime image | Critical | High | High with available fix | Secret findings |
 | --- | ---: | ---: | ---: | ---: |
 | Daemon candidate | 0 | 44 | 0 | 0 |
-| Optional dashboard candidate | 3 | 109 | 0 | 0 |
+| Optional Alpine dashboard candidate | 0 | 0 | 0 | 0 |
+
+The updated dashboard scan reported zero findings at all severities across 43
+installed packages. Its prior Debian-based candidate had 3 Critical and 109 High
+package matches and was held from publication. Scan databases change over time;
+zero current findings is not an application security certification.
 
 Counts are package/advisory matches, not necessarily distinct vulnerabilities.
 The daemon's 44 High matches represent these eight distinct advisories:
@@ -71,19 +79,25 @@ Debian's notes classify several as minor issues without a current stable-securit
 update; that differs from the scanner's severity labels. Neither label alone proves
 network exploitability. No production host or service was changed by this review.
 
-## Dashboard publication hold
+## Dashboard blockers resolved in the optional replacement
 
-The dashboard **does not pass the candidate gate and is not published** by the
-container workflow. Remaining Critical matches are:
+The older Debian dashboard did not pass the publication gate. Its three Critical
+matches were:
 
 - CVE-2025-7458 — `libsqlite3-0 3.40.1-2+deb12u2`, scanner status `affected`.
 - CVE-2026-6653 — `libxml2 2.9.14+dfsg-1.3~deb12u6`, status `fix_deferred`.
 - CVE-2023-45853 — `zlib1g 1:1.2.13.dfsg-1`, status `will_not_fix`.
 
-These require advisory/package-specific review; scanner severity alone does not
-demonstrate reachability in this dashboard. No exception was silently applied to
-permit publication. Existing source-build users must evaluate their deployment;
-keep the legacy administrative dashboard off the public Internet.
+The replacement does not install SQLite and uses newer XML/zlib packages; no
+scanner exceptions were added. Debian's tracker documents the older-package
+status for [SQLite](https://security-tracker.debian.org/tracker/CVE-2025-7458),
+[libxml2](https://security-tracker.debian.org/tracker/CVE-2026-6653) and
+[zlib/MiniZip](https://security-tracker.debian.org/tracker/CVE-2023-45853).
+In particular, Debian notes that the affected MiniZip code was not built into the
+older zlib binary package: the scan match alone did not establish exposure.
+The new image passes the same unmodified candidate gate, and has an independent
+dashboard-only workflow. Keep the administrative dashboard off the public Internet.
+It is optional for ordinary Electrum operation, not a dependency of the daemon.
 
 ## Release boundaries
 

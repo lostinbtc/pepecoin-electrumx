@@ -26,8 +26,8 @@ digest, not the historical baseline import commit or an example placeholder.
 A versioned daemon candidate pipeline is provided; see
 [container releases and upgrades](docs/CONTAINER-RELEASES.md) and the
 [current security review](docs/RELEASE-SECURITY.md). Candidate status is not a
-stable-release certification. The optional dashboard is not published while its
-remaining Critical package findings are under review.
+stable-release certification. The dashboard has a separate optional image and
+release gate; see [dashboard setup and the exact security patch](docs/DASHBOARD.md).
 
 The first [published daemon candidate, v1.18.0-pep.1-rc.1](docs/releases/v1.18.0-pep.1-rc.1.md),
 is available anonymously from GHCR. Read its exact digest, verification status,
@@ -64,6 +64,10 @@ converge. Do not treat an open socket alone as proof of synchronization.
 
 ## Optional private dashboard
 
+**Wallets and direct Electrum RPC clients do not need the dashboard.** Add it only
+for its web interface or a tool that specifically depends on its HTTP endpoints.
+See [the dashboard security patch and deployment instructions](docs/DASHBOARD.md).
+
 Create `secrets/dashboard_password` containing a unique, strong password (at least
 20 characters). Do not commit the file. Restrict the directory to its owner, and
 ensure the mounted file is readable by the container's Apache user. Compose local
@@ -73,7 +77,7 @@ without granting other host users traversal access.
 
 ```sh
 docker compose --profile dashboard build --pull --no-cache dashboard
-docker compose --profile dashboard up -d dashboard
+docker compose --profile dashboard up -d --no-deps dashboard
 ```
 
 Connect to `http://127.0.0.1:8002` on the host, or use an SSH local port forward.
