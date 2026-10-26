@@ -1,0 +1,15 @@
+{
+  "artifact": "ghcr.io/lostinbtc/pepecoin-electrumx-dashboard@sha256:43592f912a5af7017762229c21829566e9493a74dbc0cef12060a490a7f81639",
+  "image_id": "sha256:d86b3eede2db68878706f909a244008a8645bac29fd878be6fc81b6917b73577",
+  "scanner": "Trivy 0.76.1",
+  "scan_date_local": "2026-10-25 America/Phoenix",
+  "os": "Alpine 3.24.3",
+  "packages_scanned": 43,
+  "severity_counts": {},
+  "secret_findings_count": 0,
+  "candidate_gate_passed": true,
+  "blocking_findings": [],
+  "high_findings_without_available_fix": [],
+  "report_only": false,
+  "notice": "Package scan only; exploit reachability and third-party integrations are not established."
+}

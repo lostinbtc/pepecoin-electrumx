@@ -7,6 +7,9 @@ HTTP endpoints. The third-party Discord bot's integration remains unverified.
 Installing the dashboard is not required to use the standalone daemon or apply
 the [original-image Brotli-only patch](../patches/emgi-brotli/README.md).
 
+The [published v1.0.0-rc.1 dashboard candidate](releases/dashboard-v1.0.0-rc.1.md)
+includes its exact digest, anonymous download, scan summary and verification results.
+
 ## Exact security patch
 
 - [Review the dashboard security patch](https://github.com/lostinbtc/pepecoin-electrumx/commit/d02676e5e4f257419247ded31a538306bdd29793).

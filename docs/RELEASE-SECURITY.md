@@ -36,6 +36,9 @@ The updated dashboard scan reported zero findings at all severities across 43
 installed packages. Its prior Debian-based candidate had 3 Critical and 109 High
 package matches and was held from publication. Scan databases change over time;
 zero current findings is not an application security certification.
+The [published dashboard candidate](releases/dashboard-v1.0.0-rc.1.md) was also
+anonymously pulled, retested and rescanned by exact registry digest; its recorded
+summary has the same zero-finding result.
 
 Counts are package/advisory matches, not necessarily distinct vulnerabilities.
 The daemon's 44 High matches represent these eight distinct advisories:

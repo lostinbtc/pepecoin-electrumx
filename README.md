@@ -67,6 +67,8 @@ converge. Do not treat an open socket alone as proof of synchronization.
 **Wallets and direct Electrum RPC clients do not need the dashboard.** Add it only
 for its web interface or a tool that specifically depends on its HTTP endpoints.
 See [the dashboard security patch and deployment instructions](docs/DASHBOARD.md).
+The [optional dashboard image v1.0.0-rc.1](docs/releases/dashboard-v1.0.0-rc.1.md)
+is available anonymously, with its verified digest and scan results recorded.
 
 Create `secrets/dashboard_password` containing a unique, strong password (at least
 20 characters). Do not commit the file. Restrict the directory to its owner, and
