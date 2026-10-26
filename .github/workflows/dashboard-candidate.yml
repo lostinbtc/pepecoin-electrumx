@@ -67,7 +67,7 @@ jobs:
           "$RUNNER_TEMP/release-tools/trivy" image --format cyclonedx \
             --output reports/dashboard-sbom.cdx.json pepecoin-electrumx-candidate:dashboard
           docker run --rm --network none --entrypoint apk pepecoin-electrumx-candidate:dashboard \
-            info -v > reports/dashboard-packages.txt
+            --no-network info -v > reports/dashboard-packages.txt
       - name: Save exact verified image
         run: docker save pepecoin-electrumx-candidate:dashboard | gzip > "$RUNNER_TEMP/dashboard-image.tar.gz"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
