@@ -1,0 +1,125 @@
+name: Build and verify optional dashboard candidate
+
+on:
+  push:
+    branches: [main]
+    tags: ['dashboard-v*-rc.*']
+    paths:
+      - 'dashboard/**'
+      - 'tests/check_dashboard.py'
+      - 'tests/mock_rpc.py'
+      - 'scripts/check_image_scan.py'
+      - 'scripts/install_release_tools.py'
+      - '.github/workflows/dashboard-candidate.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install checksum-verified tools and scan source history
+        run: |
+          python3 scripts/install_release_tools.py --directory "$RUNNER_TEMP/release-tools"
+          mkdir -p reports
+          "$RUNNER_TEMP/release-tools/gitleaks" git --redact --report-path reports/gitleaks.json .
+          "$RUNNER_TEMP/release-tools/actionlint" -color
+      - name: Build optional dashboard only
+        env:
+          SOURCE_URL: https://github.com/${{ github.repository }}
+          SOURCE_REVISION: ${{ github.sha }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: |
+          docker build --pull --no-cache --platform linux/amd64 \
+            --label "org.opencontainers.image.source=$SOURCE_URL" \
+            --label "org.opencontainers.image.revision=$SOURCE_REVISION" \
+            --label "org.opencontainers.image.version=$RELEASE_REF" \
+            --label 'org.opencontainers.image.licenses=MIT' \
+            --label 'org.opencontainers.image.description=Optional private dashboard; not required for Electrum wallet or direct RPC clients' \
+            -t pepecoin-electrumx-candidate:dashboard dashboard
+      - name: Verify authentication, populated pages and persistent-data restart
+        env:
+          FIXTURE_IMAGE: ghcr.io/lostinbtc/pepecoin-electrumx@sha256:1449b990ad0d37afb79e8a72be0781427235f67de7acc773a50adba38b51089d
+        run: |
+          docker pull "$FIXTURE_IMAGE"
+          python3 tests/check_dashboard.py --dashboard-image pepecoin-electrumx-candidate:dashboard \
+            --python-image "$FIXTURE_IMAGE" | tee reports/dashboard-empty-test.txt
+          python3 tests/check_dashboard.py --dashboard-image pepecoin-electrumx-candidate:dashboard \
+            --python-image "$FIXTURE_IMAGE" --populated | tee reports/dashboard-populated-test.txt
+      - name: Enforce dashboard vulnerability and secret gate
+        run: |
+          "$RUNNER_TEMP/release-tools/trivy" image --timeout 15m --scanners vuln,secret \
+            --format json --output "$RUNNER_TEMP/dashboard-raw-scan.json" pepecoin-electrumx-candidate:dashboard
+          python3 scripts/check_image_scan.py "$RUNNER_TEMP/dashboard-raw-scan.json" \
+            --output reports/dashboard-scan-summary.json
+          "$RUNNER_TEMP/release-tools/trivy" image --format cyclonedx \
+            --output reports/dashboard-sbom.cdx.json pepecoin-electrumx-candidate:dashboard
+          docker run --rm --network none --entrypoint apk pepecoin-electrumx-candidate:dashboard \
+            info -v > reports/dashboard-packages.txt
+      - name: Save exact verified image
+        run: docker save pepecoin-electrumx-candidate:dashboard | gzip > "$RUNNER_TEMP/dashboard-image.tar.gz"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tested-dashboard-image
+          path: ${{ runner.temp }}/dashboard-image.tar.gz
+          compression-level: 0
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: dashboard-verification-reports
+          path: reports/
+          retention-days: 90
+
+  publish-dashboard:
+    needs: verify
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/dashboard-v') && contains(github.ref_name, '-rc.')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: tested-dashboard-image
+          path: ${{ runner.temp }}
+      - name: Validate tag and publish exact tested optional image
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_REF" =~ ^dashboard-v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]
+          IMAGE="ghcr.io/${REPOSITORY,,}-dashboard:${RELEASE_REF#dashboard-}"
+          gzip -dc "$RUNNER_TEMP/dashboard-image.tar.gz" | docker load
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          docker tag pepecoin-electrumx-candidate:dashboard "$IMAGE"
+          docker push "$IMAGE"
+          docker image inspect "$IMAGE" --format '{{range .RepoDigests}}{{println .}}{{end}}' > dashboard-digest.txt
+          {
+            echo '### Optional private dashboard — Linux/amd64 release candidate'
+            echo 'Not required by wallets or direct Electrum RPC clients. Third-party bot integration unverified.'
+            echo 'Keep loopback-only or behind an SSH tunnel; no latest/stable tag is published.'
+            cat dashboard-digest.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+          docker logout ghcr.io
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: published-dashboard-digest
+          path: dashboard-digest.txt
+          retention-days: 90

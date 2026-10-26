@@ -131,7 +131,7 @@ jobs:
             echo '### Release candidate — not a stable release'
             echo 'Exact CI-tested daemon image; Linux/amd64 only.'
             echo 'Full-chain indexing must be verified separately on this registry digest.'
-            echo 'Third-party bot compatibility is not verified; dashboard is not published.'
+            echo 'Third-party bot compatibility is not verified; optional dashboard uses a separate release workflow.'
             cat image-digest.txt
           } >> "$GITHUB_STEP_SUMMARY"
           docker logout ghcr.io
