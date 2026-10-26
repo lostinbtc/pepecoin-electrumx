@@ -7,31 +7,20 @@ Current Maintainers: The Electrum developers
 Language: Python (>= 3.10)
 ```
 
-The attribution above describes upstream ElectrumX. Pepecoin adaptations and this
-repository's maintenance are documented in [provenance](docs/PROVENANCE.md).
-
-Standalone, source-built Pepecoin ElectrumX 1.18.0 with an optional PHP dashboard.
-This repository starts with fresh history; it contains no Pepecoin Service website,
-faucet, donation service, Discord credentials, live databases, or production configs.
+Standalone Pepecoin ElectrumX 1.18.0 with Docker images and an optional patched dashboard.
 
 ## Status and scope
 
-This is a maintained reconstruction, not an official Pepecoin Core release and not
-a drop-in replacement for the legacy combined Apache/ElectrumX container. Read
-[provenance](docs/PROVENANCE.md) and [migration](docs/MIGRATION.md) before switching.
-Registry publishing is gated and initially release-candidate only; no stable image
-has been certified. Use a reviewed source commit or actual published candidate
-digest, not the historical baseline import commit or an example placeholder.
+The Docker images are Linux/amd64 release candidates. The
+[ElectrumX image](docs/releases/v1.18.0-pep.1-rc.1.md) has passed full-chain indexing
+and restart/protocol checks. Release notes include verified digests, test results
+and known limitations.
 
-A versioned daemon candidate pipeline is provided; see
-[container releases and upgrades](docs/CONTAINER-RELEASES.md) and the
-[current security review](docs/RELEASE-SECURITY.md). Candidate status is not a
-stable-release certification. The dashboard has a separate optional image and
-release gate; see [dashboard setup and the exact security patch](docs/DASHBOARD.md).
-
-The first [published daemon candidate, v1.18.0-pep.1-rc.1](docs/releases/v1.18.0-pep.1-rc.1.md),
-is available anonymously from GHCR. Read its exact digest, verification status,
-and limitations before opting in; a candidate is not a stable-release endorsement.
+See [setup and upgrades](docs/CONTAINER-RELEASES.md),
+[security findings](docs/RELEASE-SECURITY.md), and
+[dashboard setup and its security patch](docs/DASHBOARD.md).
+If switching from a combined ElectrumX/dashboard container, follow the
+[migration guide](docs/MIGRATION.md); this uses separate services.
 
 The Electrum daemon and dashboard are separate services. The dashboard is disabled
 unless the `dashboard` Compose profile is selected. Only Electrum ports 50001,
@@ -62,7 +51,7 @@ docker compose exec -T electrumx electrumx_rpc getinfo
 A fresh index may take considerable time. The database and daemon heights should
 converge. Do not treat an open socket alone as proof of synchronization.
 
-## Optional private dashboard
+## Optional patched dashboard
 
 **Wallets and direct Electrum RPC clients do not need the dashboard.** Add it only
 for its web interface or a tool that specifically depends on its HTTP endpoints.
@@ -83,20 +72,16 @@ docker compose --profile dashboard up -d --no-deps dashboard
 ```
 
 Connect to `http://127.0.0.1:8002` on the host, or use an SSH local port forward.
-Do not expose this legacy administrative dashboard publicly. Its application
-controls can affect Electrum sessions. Authentication does not make it a hardened
-public web application. Geolocation lookups are disabled by default.
+Keep this administrative dashboard private: its controls can affect Electrum
+sessions. Geolocation lookups are disabled by default.
 
 The `dashboard_data` named volume stores runtime state separately from the image.
-Its `.htaccess` denies HTTP access. Back up both named volumes and your local
+Apache denies direct HTTP access to that data. Back up both named volumes and your local
 configuration before upgrades. Never run `docker compose down -v` on a live index.
 
 ## Change review
 
-The baseline import, deployed history-compaction safeguards, PHP/Brotli updates,
-dashboard authentication hardening, and optional legacy-image compatibility patch are kept in
-separate commits. Review the relevant commit instead of merging unrelated changes.
-See [separate security diffs](docs/CHANGE-REVIEW.md) and
+See [security patches](docs/CHANGE-REVIEW.md) and
 [verification results and reproducible checks](docs/VERIFICATION.md).
 
 If you only need the reported Brotli fix while retaining the original combined
@@ -106,5 +91,5 @@ repository's root Compose deployment.
 ## Licenses
 
 ElectrumX is MIT-licensed; retain `LICENSE` and `electrumx/LICENCE`. The dashboard
-has its own MIT notice in `dashboard/LICENSE`. See provenance for upstream and
-Pepecoin contributor attribution. Existing notices are retained, not replaced.
+has its own MIT notice in `dashboard/LICENSE`. Retain the author and copyright
+notices supplied with each component.
