@@ -1289,6 +1289,31 @@ class Pepecoin(AuxPowMixin, Coin):
     REORG_LIMIT = 2000
     DESERIALIZER = lib_tx.DeserializerAuxPowSegWit
 
+class Whippet(AuxPowMixin, Coin):
+    """Whippet mainnet (Core v1.4.0); independent of Pepecoin's database.
+
+    Core validates consensus, including the scheduled AuxPoW transition.
+    The indexer accepts both legacy and AuxPoW serialized block headers.
+    """
+    NAME = "Whippet"
+    SHORTNAME = "WHT"
+    NET = "mainnet"
+    RPC_PORT = 33665
+    XPUB_VERBYTES = bytes.fromhex("02facafd")
+    XPRV_VERBYTES = bytes.fromhex("02fac398")
+    P2PKH_VERBYTE = bytes.fromhex("49")
+    P2SH_VERBYTES = (bytes.fromhex("16"),)
+    WIF_BYTE = bytes.fromhex("9e")
+    GENESIS_HASH = "863714e1c1a15526a0081a35097c56e28dbd43ef97f76fec0ccd5a7510326292"
+    DESERIALIZER = lib_tx.DeserializerAuxPowSegWit
+    REORG_LIMIT = 2000
+    # Initial-sync progress estimates only, not consensus parameters.
+    TX_COUNT = 262000
+    TX_COUNT_HEIGHT = 262000
+    TX_PER_BLOCK = 2
+    PEERS = []
+
+
 class PepecoinTestnet(Pepecoin):
     NAME = "Pepecoin"
     SHORTNAME = "PEPETEST"

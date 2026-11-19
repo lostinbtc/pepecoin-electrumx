@@ -1,4 +1,4 @@
-ARG PYTHON_BASE_IMAGE=python:3.13-slim-trixie@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+ARG PYTHON_BASE_IMAGE=python:3.13.18-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
 FROM ${PYTHON_BASE_IMAGE} AS builder
 
 ENV HOME=/data ALLOW_ROOT=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
@@ -20,7 +20,8 @@ ENV HOME=/data ALLOW_ROOT=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends ca-certificates libleveldb1d && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    python -m pip uninstall -y pip
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /opt/electrumx/entrypoint.sh /opt/electrumx/entrypoint.sh

@@ -75,9 +75,9 @@ class Peer:
         peers = []
         if isinstance(features, dict):
             hosts = features.get('hosts')
-            if isinstance(hosts, dict):
+            if isinstance(hosts, dict) and len(hosts) <= 5:
                 peers = [Peer(host, features, source=source)
-                         for host in hosts if isinstance(host, str)]
+                         for host in hosts if isinstance(host, str) and len(host) < 256]
         return peers
 
     @classmethod

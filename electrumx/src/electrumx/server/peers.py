@@ -38,6 +38,8 @@ STATUS_DESCS = ('good', 'stale', 'never', 'bad')
 STALE_SECS = 3 * 3600
 WAKEUP_SECS = 300
 PEER_ADD_PAUSE = 600
+NUM_PEERS_MAX_TOTAL = 1000
+NUM_PEERS_SINGLE_RESP_KEEP = 100
 
 
 class BadPeerError(Exception):
@@ -236,6 +238,8 @@ class PeerManager:
             else:
                 use_peers = new_peers
             for peer in use_peers:
+                if len(self.peers) >= NUM_PEERS_MAX_TOTAL:
+                    continue
                 self.logger.info(f'accepted new peer {peer} from {source}')
                 peer.retry_event = Event()
                 self.peers.add(peer)
@@ -333,7 +337,7 @@ class PeerManager:
                     match.update_features_from_peer(peer)
             # Trim this data structure
             self.recent_peer_adds = {k: v for k, v in self.recent_peer_adds.items()
-                                     if v + PEER_ADD_PAUSE < now}
+                                     if v + PEER_ADD_PAUSE > now}
         else:
             # Forget the peer if long-term unreachable
             if peer.last_good and not peer.bad:
@@ -456,6 +460,8 @@ class PeerManager:
         message = 'server.peers.subscribe'
         raw_peers = await session.send_request(message)
         assert_good(message, raw_peers, list)
+        random.shuffle(raw_peers)
+        raw_peers = raw_peers[:NUM_PEERS_SINGLE_RESP_KEEP]
 
         # Check the peers list we got from a remote peer.
         # Each is expected to be of the form:
@@ -531,6 +537,9 @@ class PeerManager:
         if not peers:
             self.logger.info('ignored add_peer request: no peers given')
             return False
+        if any(not peer.is_public for peer in peers):
+            self.logger.info('ignored add_peer request: non-public peer')
+            return False
 
         # Just look at the first peer, require it
         peer = peers[0]
@@ -554,7 +563,7 @@ class PeerManager:
             getaddrinfo = asyncio.get_event_loop().getaddrinfo
             try:
                 infos = await getaddrinfo(host, 80, type=socket.SOCK_STREAM)
-            except socket.gaierror:
+            except (socket.gaierror, UnicodeError):
                 permit = False
                 reason = 'address resolution failure'
             else:

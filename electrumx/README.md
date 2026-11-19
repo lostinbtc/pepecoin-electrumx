@@ -4,7 +4,7 @@
 Licence: MIT
 Original Author: Neil Booth
 Current Maintainers: The Electrum developers
-Language: Python (>= 3.10)
+Language: Python (>= 3.11)
 ```
 
 [![Latest PyPI package](https://badge.fury.io/py/e_x.svg)](https://pypi.org/project/e-x/)

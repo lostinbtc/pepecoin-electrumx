@@ -4,10 +4,11 @@
 Licence: MIT
 Original Author: Neil Booth
 Current Maintainers: The Electrum developers
-Language: Python (>= 3.10)
+Language: Python (>= 3.11)
 ```
 
 Standalone Pepecoin ElectrumX 1.18.0 with Docker images and an optional patched dashboard.
+The current source also supports Whippet mainnet using a separate index.
 
 ## Status and scope
 
@@ -27,6 +28,14 @@ unless the `dashboard` Compose profile is selected. Only Electrum ports 50001,
 50002, and 50004 are public. Administrative RPC 8000 is internal to Docker.
 
 ## Configure and build
+
+Current source pins Python 3.13.18 and websockets 17.4 and includes upstream
+peer-discovery hardening. Rebuild to include these changes; previously published
+image tags are unchanged. See the [backend update notes](docs/ELECTRUM-SECURITY-2026-11.md).
+
+For Whippet, select `COIN=Whippet` in a separate deployment, with its own database
+volume, Core RPC connection and host-port mappings. Whippet Core's default RPC
+port is 33665. Never share an index volume between Pepecoin and Whippet.
 
 Requirements: Docker Engine with Compose v2, a synced Pepecoin Core node with
 transaction indexing enabled, valid TLS certificates, and sufficient persistent

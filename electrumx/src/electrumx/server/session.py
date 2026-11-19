@@ -1163,6 +1163,17 @@ class ElectrumX(SessionBase):
 
     async def add_peer(self, features):
         '''Add a peer (but only if the peer resolves to the source).'''
+        # Backport of upstream PR #402: reject malformed/oversized announcements
+        # before treating the caller as a peer or allocating discovery work.
+        if not isinstance(features, dict) or len(features) > 50 or len(repr(features)) > 8000:
+            raise RPCError(BAD_REQUEST, 'Invalid or oversized peer features')
+        for field in ('genesis_hash', 'protocol_max', 'protocol_min', 'server_version'):
+            if not isinstance(features.get(field), str):
+                raise RPCError(BAD_REQUEST, f'Peer feature {field} must be a string')
+        hosts = features.get('hosts')
+        if not isinstance(hosts, dict) or any(not isinstance(host, str) or not isinstance(info, dict)
+                                              for host, info in hosts.items()):
+            raise RPCError(BAD_REQUEST, 'Invalid peer hosts')
         self.is_peer = True
         self.bump_cost(100.0)
         return await self.peer_mgr.on_add_peer(features, self.remote_address())
